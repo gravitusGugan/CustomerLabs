@@ -14,9 +14,10 @@ import {
   IconButton,
   List,
   ListItem,
-  Grid
+  Grid,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { green, red } from "@mui/material/colors";
@@ -84,6 +85,18 @@ const App = () => {
     setAvailableSchemas([...availableSchemas, removedSchema]);
   };
 
+  // Handle schema type change
+  const handleSchemaChange = (index, newValue) => {
+    const newSchemaList = [...schemaList];
+    const updatedSchema = schemaOptions.find(
+      (option) => option.value === newValue
+    );
+    if (updatedSchema) {
+      newSchemaList[index] = updatedSchema;
+      setSchemaList(newSchemaList);
+    }
+  };
+
   // Drag and Drop Handlers
   const handleDragStart = (e, index) => {
     e.dataTransfer.setData("index", index);
@@ -118,19 +131,20 @@ const App = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <div>
+      <div >
         <AppBar position="static" sx={{ bgcolor: "#00BBAB" }}>
           <Toolbar>
+            <KeyboardArrowLeftIcon />
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
               View Audience
             </Typography>
           </Toolbar>
         </AppBar>
         <Button
-          variant="contained"
-          color="primary"
+          variant="outlined"
           onClick={handleDrawerOpen}
           sx={{ mt: 2 }}
+       
         >
           Save Segment
         </Button>
@@ -141,7 +155,11 @@ const App = () => {
               <Typography variant="h6" sx={{ flexGrow: 1 }}>
                 Save Segment
               </Typography>
-              <IconButton onClick={handleDrawerClose} edge="end" color="inherit">
+              <IconButton
+                onClick={handleDrawerClose}
+                edge="end"
+                color="inherit"
+              >
                 <CloseIcon />
               </IconButton>
             </Toolbar>
@@ -160,29 +178,120 @@ const App = () => {
               size="small" // Set TextField to small size
             />
             <Typography variant="body2" sx={{ mt: 1 }}>
-              To save your segment, you need to add the schemas to build the query
+              To save your segment, you need to add the schemas to build the
+              query
             </Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              <span style={{ color: green[500] }}>● User Traits</span> - <span style={{ color: red[500] }}>● Group Traits</span>
-            </Typography>
-            <FormControl fullWidth margin="dense">
+            <Box mt={2} p={2}>
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                <span style={{ color: green[500] }}>● User Traits</span> -{" "}
+                <span style={{ color: red[500] }}>● Group Traits</span>
+              </Typography>
+            </Box>
+            <Box
+              mt={2}
+              p={2}
+              border={1}
+              borderRadius={4}
+              borderColor="grey.400"
+            >
+              <List>
+                {schemaList.map((schema, index) => (
+                  <ListItem
+                    key={index}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, index)}
+                    sx={{ display: "flex", alignItems: "center" }}
+                  >
+                    <Grid container alignItems="center" spacing={1}>
+                      <Grid item>
+                        <DragIndicatorIcon />
+                      </Grid>
+                      <Grid item xs>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>{schema.label}</InputLabel>
+                          <Select
+                            label={schema.label}
+                            value={schema.value}
+                            onChange={(e) =>
+                              handleSchemaChange(index, e.target.value)
+                            }
+                            renderValue={() => (
+                              <Box display="flex" alignItems="center">
+                                <span
+                                  style={{
+                                    color:
+                                      schema.color === "green"
+                                        ? green[500]
+                                        : red[500],
+                                    marginRight: 8,
+                                  }}
+                                >
+                                  ●
+                                </span>
+                                {schema.label}
+                              </Box>
+                            )}
+                          >
+                            {schemaOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                <span
+                                  style={{
+                                    color:
+                                      option.color === "green"
+                                        ? green[500]
+                                        : red[500],
+                                    marginRight: 8,
+                                  }}
+                                >
+                                  ●
+                                </span>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                      <Grid item>
+                        <IconButton
+                          edge="end"
+                          aria-label="delete"
+                          onClick={() => handleRemoveSchema(index)}
+                        >
+                          <CloseIcon />
+                        </IconButton>
+                      </Grid>
+                    </Grid>
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+            <FormControl fullWidth margin="dense" sx={{ mt: 2 }}>
               <InputLabel>Add schema to segment</InputLabel>
               <Select
+                label="Add schema to segment"
                 value={selectedSchema}
                 onChange={(e) => setSelectedSchema(e.target.value)}
                 renderValue={(value) => (
                   <Box display="flex" alignItems="center">
                     <span
                       style={{
-                        color: availableSchemas.find((option) => option.value === value).color === "green"
-                          ? green[500]
-                          : red[500],
+                        color:
+                          availableSchemas.find(
+                            (option) => option.value === value
+                          ).color === "green"
+                            ? green[500]
+                            : red[500],
                         marginRight: 8,
                       }}
                     >
                       ●
                     </span>
-                    {availableSchemas.find((option) => option.value === value).label}
+                    {
+                      availableSchemas.find((option) => option.value === value)
+                        .label
+                    }
                   </Box>
                 )}
               >
@@ -204,56 +313,13 @@ const App = () => {
             <Button color="primary" onClick={handleAddSchema} sx={{ mt: 2 }}>
               + Add new schema
             </Button>
-            <Box mt={2} p={2} border={1} borderRadius={4} borderColor="grey.400">
-              <Typography variant="h6">Selected Schemas</Typography>
-              <List>
-                {schemaList.map((schema, index) => (
-                  <ListItem
-                    key={index}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, index)}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, index)}
-                    sx={{ display: 'flex', alignItems: 'center' }}
-                  >
-                    <Grid container alignItems="center" spacing={1}>
-                      <Grid item>
-                        <DragIndicatorIcon />
-                      </Grid>
-                      <Grid item xs>
-                        <Box display="flex" alignItems="center">
-                          <span
-                            style={{
-                              color: schema.color === "green" ? green[500] : red[500],
-                              marginRight: 8,
-                            }}
-                          >
-                            ●
-                          </span>
-                          <TextField
-                            fullWidth
-                            value={schema.label}
-                            disabled
-                            size="small" // Set TextField to small size
-                          />
-                        </Box>
-                      </Grid>
-                      <Grid item>
-                        <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveSchema(index)}>
-                          <CloseIcon />
-                        </IconButton>
-                      </Grid>
-                    </Grid>
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
+
             <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
               <Button
                 onClick={handleSaveSegment}
                 color="primary"
                 variant="contained"
-                sx={{ mr: 1 }}
+                sx={{ bgcolor: "#00BBAB", mr: 1 }}
               >
                 Save Segment
               </Button>
